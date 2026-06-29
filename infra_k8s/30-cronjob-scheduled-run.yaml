@@ -1,0 +1,42 @@
+# scheduled background run, nobody watching. Starts the workflow by string name.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: scheduled-run
+  namespace: agent
+spec:
+  schedule: "0 8 * * *"
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: dispatch
+              image: agent-worker:dev
+              imagePullPolicy: IfNotPresent
+              envFrom:
+                - configMapRef:
+                    name: agent-config
+                - secretRef:
+                    name: agent-secrets
+              command: ["python", "-c"]
+              args:
+                - |
+                  import asyncio, os, uuid
+                  from temporalio.client import Client
+
+                  async def main():
+                      client = await Client.connect(
+                          os.environ["TEMPORAL_HOST"],
+                          namespace=os.environ.get("TEMPORAL_NAMESPACE", "default"),
+                      )
+                      await client.start_workflow(
+                          "AgentWorkflow",
+                          args=["scheduled", "Summarize my unread github notifications", None],
+                          id=f"agent-scheduled-{uuid.uuid4().hex[:8]}",
+                          task_queue=os.environ.get("TEMPORAL_TASK_QUEUE", "agent-tasks"),
+                      )
+
+                  asyncio.run(main())

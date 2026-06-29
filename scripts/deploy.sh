@@ -3,7 +3,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-K8S="$ROOT/infra/k8s"
+K8S="$ROOT/infra_k8s"
 
 kubectl apply -f "$K8S/00-namespace.yaml"
 kubectl apply -f "$K8S/01-configmap.yaml"

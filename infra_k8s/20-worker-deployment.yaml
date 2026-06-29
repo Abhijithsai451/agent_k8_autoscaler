@@ -1,0 +1,40 @@
+# no Service on purpose, nothing connects to it, it polls Temporal.
+# KEDA owns the replica count once Tier 2 is applied.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker
+  namespace: agent
+  labels:
+    app: worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: worker
+  template:
+    metadata:
+      labels:
+        app: worker
+    spec:
+      containers:
+        - name: worker
+          image: agent-worker:dev
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: agent-config
+            - secretRef:
+                name: agent-secrets
+          livenessProbe:
+            exec:
+              command: ["pgrep", "-f", "worker.py"]
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi

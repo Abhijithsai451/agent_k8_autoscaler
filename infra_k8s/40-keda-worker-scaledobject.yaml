@@ -1,0 +1,21 @@
+# Tier 2, primary worker scaler. Needs KEDA installed. Temporal scaler is v2.17+.
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: worker
+  namespace: agent
+spec:
+  scaleTargetRef:
+    name: worker
+  minReplicaCount: 0
+  maxReplicaCount: 10
+  cooldownPeriod: 120
+  triggers:
+    - type: temporal
+      metadata:
+        endpoint: temporal-frontend.temporal.svc.cluster.local:7233
+        namespace: default
+        taskQueue: agent-tasks
+        queueTypes: "workflow,activity"
+        targetQueueSize: "5"
+        activationTargetQueueSize: "0"
