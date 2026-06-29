@@ -16,7 +16,6 @@ def get_composio()-> Composio:
         _composio = Composio(
             provider = OpenAIResponsesProvider(),
             api_key = settings.composio_api_key
-
         )
     return _composio
 
